@@ -80,6 +80,10 @@ import meta.data.scripts.FunkinLua.ModchartSprite;
 import math.*;
 import modchart.*;
 
+// Imports for the VisionSlice
+
+import meta.data.SongMetadata.Metadata;
+
 #if sys
 import sys.FileSystem;
 #end
@@ -185,6 +189,7 @@ class PlayState extends MusicBeatState
 	public static var storyWeek:Int = 0;
 	public static var storyPlaylist:Array<String> = [];
 	public static var storyDifficulty:Int = 1;
+	public static var metadata:SongMetadata = null;
 
 	public var spawnTime:Float = 3000;
 
@@ -298,6 +303,7 @@ class PlayState extends MusicBeatState
 	public var songMisses:Int = 0;
 	public var scoreTxt:FlxText;
 	public var timeTxt:FlxText;
+	public var songCard:SongCard;
 
 	var scoreTxtTween:FlxTween;
 
@@ -591,6 +597,8 @@ class PlayState extends MusicBeatState
 
 		if (SONG == null)
 			SONG = Song.loadFromJson('tutorial');
+
+		metadata = Metadata.load(SONG.song);
 
 		Conductor.mapBPMChanges(SONG);
 		Conductor.changeBPM(SONG.bpm);
@@ -1375,6 +1383,11 @@ class PlayState extends MusicBeatState
 			botplayTxt.y = timeBarBG.y - 78;
 		}
 
+		songCard = new SongCard(0, 0, metadata);
+		songCard.screenCenter(Y);
+		songCard.x = -songCard.width;
+		add(songCard);
+
 		playFields.cameras = [camHUD];
 		grpNoteSplashes.cameras = [camHUD];
 		notes.cameras = [camHUD];
@@ -1390,6 +1403,7 @@ class PlayState extends MusicBeatState
 		doof.cameras = [camOther];
 		topBar.cameras = [camOther];
 		bottomBar.cameras = [camOther];
+		songCard.cameras = [camHUD];
 
 		setOnScripts('playFields', playFields);
 		setOnScripts('grpNoteSplashes', grpNoteSplashes);
@@ -1405,6 +1419,7 @@ class PlayState extends MusicBeatState
 		setOnScripts('doof', doof);
 		setOnScripts('topBar', topBar);
 		setOnScripts('bottomBar', bottomBar);
+		setOnScripts('songCard', songCard);
 
 		callOnScripts('onCreate', []);
 
@@ -2220,6 +2235,8 @@ class PlayState extends MusicBeatState
 		songLength = FlxG.sound.music.length;
 		FlxTween.tween(timeBar, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
 		FlxTween.tween(timeTxt, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+
+		if (metadata.card.expandBeat == 0) songCard.show();
 
 		#if desktop
 		// Updating Discord Rich Presence (with Time Left)
@@ -5369,6 +5386,9 @@ class PlayState extends MusicBeatState
 			FlxG.camera.zoom += 0.015 * camZoomingMult;
 			camHUD.zoom += 0.03 * camZoomingMult;
 		}
+
+		if (curBeat == metadata.card.expandBeat && metadata.card.expandBeat > 0)
+			songCard.show();
 
 		lastBeatHit = curBeat;
 
