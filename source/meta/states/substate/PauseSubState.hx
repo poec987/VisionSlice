@@ -15,6 +15,7 @@ import flixel.FlxCamera;
 import flixel.util.FlxStringUtil;
 
 import meta.data.*;
+import meta.data.options.*;
 import meta.states.*;
 import gameObjects.*;
 
@@ -23,7 +24,7 @@ class PauseSubState extends MusicBeatSubstate
 	var grpMenuShit:FlxTypedGroup<Alphabet>;
 
 	var menuItems:Array<String> = [];
-	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', #if HIT_SINGLE 'Options', #end'Change Difficulty', 'Exit to menu'];
+	var menuItemsOG:Array<String> = ['Resume', 'Restart Song','Options', 'Exit to menu'];
 	var difficultyChoices = [];
 	var curSelected:Int = 0;
 
@@ -34,7 +35,7 @@ class PauseSubState extends MusicBeatSubstate
 	var curTime:Float = Math.max(0, Conductor.songPosition);
 	//var botplayText:FlxText;
 
-	public static var songName:String = '';
+	public static var songName:String = 'breakfast';
 
 	override function create()
 	{
@@ -73,14 +74,11 @@ class PauseSubState extends MusicBeatSubstate
 
 		pauseMusic = new FlxSound();
 		try {
-			if(songName != null) {
-				pauseMusic.loadEmbedded(Paths.music(songName), true, true);
-			} else if (songName != 'None') {
-				pauseMusic.loadEmbedded(Paths.music(Paths.formatToSongPath(ClientPrefs.pauseMusic)), true, true);
-			}
-			pauseMusic.volume = 0;
-			pauseMusic.play(false, FlxG.random.int(0, Std.int(pauseMusic.length / 2)));
-		} catch(e) {}
+			pauseMusic.loadEmbedded(Paths.music(Paths.formatToSongPath('Breakfast')), true, true);
+		} catch (e) {}
+		
+		pauseMusic.volume = 0;
+		pauseMusic.play(false, FlxG.random.int(0, Std.int(pauseMusic.length / 2)));
 
 
 		FlxG.sound.list.add(pauseMusic);
@@ -92,56 +90,67 @@ class PauseSubState extends MusicBeatSubstate
 		bg.scrollFactor.set();
 		add(bg);
 
-		var levelInfo:FlxText = new FlxText(20, 15, 0, "", 32);
-		levelInfo.text += PlayState.SONG.song;
-		levelInfo.scrollFactor.set();
-		levelInfo.setFormat(Paths.font("vcr.ttf"), 32);
-		levelInfo.updateHitbox();
-		add(levelInfo);
+		var data:SongMetadata = PlayState.metadata;
+		var credits:Array<String> = [];
+		credits.push(data.credits.music.join(', ') + ' - ' + data.card.name);
+		if (data.credits.director != null) credits.push('Director: ' + data.credits.director.join(', '));
+		if (data.credits.art != null) credits.push('Art: ' + data.credits.art.join(', '));
+		if (data.credits.coding != null) credits.push('Coding: ' + data.credits.coding.join(', '));
+		if (data.credits.chart != null) credits.push('Charting: ' + data.credits.chart.join(', '));
+		if (data.credits.va != null) credits.push('Voice Acting: ' + data.credits.va.join(', '));
+		if (data.credits.basedon != null) credits.push('Based On: ' + data.credits.basedon.join(', '));
 
-		var levelDifficulty:FlxText = new FlxText(20, 15 + 32, 0, "", 32);
-		levelDifficulty.text += CoolUtil.difficultyString();
-		levelDifficulty.scrollFactor.set();
-		levelDifficulty.setFormat(Paths.font('vcr.ttf'), 32);
-		levelDifficulty.updateHitbox();
-		add(levelDifficulty);
+		var i:Int = 0;
+		for (credit in credits) {
+			var t:FlxText = new FlxText();
+			t.text = credit;
+			t.setFormat(Paths.font('vcr.ttf'), 32);
+			t.x = cam.width - t.width - 20;
+			t.y = 5 * i + 15;
+			t.alpha = 0;
+			add(t);
 
-		var blueballedTxt:FlxText = new FlxText(20, 15 + 32, 0, "", 32);
-		blueballedTxt.text = "Blueballed: " + PlayState.deathCounter;
-		blueballedTxt.scrollFactor.set();
-		blueballedTxt.setFormat(Paths.font('vcr.ttf'), 32);
-		blueballedTxt.updateHitbox();
-		add(blueballedTxt);
+			FlxTween.tween(t, {alpha: 1, y: 25 * i + 15}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3}); 
 
-		practiceText = new FlxText(20, 15 + 101, 0, "PRACTICE MODE", 32);
-		practiceText.scrollFactor.set();
-		practiceText.setFormat(Paths.font('vcr.ttf'), 32);
-		practiceText.x = cam.width - (practiceText.width + 20);
-		practiceText.updateHitbox();
-		practiceText.visible = PlayState.instance.practiceMode;
-		add(practiceText);
+			i++;
+		}
 
-		var chartingText:FlxText = new FlxText(20, 15 + 101, 0, "CHARTING MODE", 32);
-		chartingText.scrollFactor.set();
-		chartingText.setFormat(Paths.font('vcr.ttf'), 32);
-		chartingText.x = cam.width - (chartingText.width + 20);
-		chartingText.y = cam.height - (chartingText.height + 20);
-		chartingText.updateHitbox();
-		chartingText.visible = PlayState.chartingMode;
-		add(chartingText);
+		// var blueballedTxt:FlxText = new FlxText(20, 15 + 32, 0, "", 32);
+		// blueballedTxt.text = "Blueballed: " + PlayState.deathCounter;
+		// blueballedTxt.scrollFactor.set();
+		// blueballedTxt.setFormat(Paths.font('vcr.ttf'), 32);
+		// blueballedTxt.updateHitbox();
+		// add(blueballedTxt);
 
-		blueballedTxt.alpha = 0;
-		levelDifficulty.alpha = 0;
-		levelInfo.alpha = 0;
+		// practiceText = new FlxText(20, 15 + 101, 0, "PRACTICE MODE", 32);
+		// practiceText.scrollFactor.set();
+		// practiceText.setFormat(Paths.font('vcr.ttf'), 32);
+		// practiceText.x = cam.width - (practiceText.width + 20);
+		// practiceText.updateHitbox();
+		// practiceText.visible = PlayState.instance.practiceMode;
+		// add(practiceText);
 
-		levelInfo.x = cam.width - (levelInfo.width + 20);
-		levelDifficulty.x = cam.width - (levelDifficulty.width + 20);
-		blueballedTxt.x = cam.width - (blueballedTxt.width + 20);
+		// var chartingText:FlxText = new FlxText(20, 15 + 101, 0, "CHARTING MODE", 32);
+		// chartingText.scrollFactor.set();
+		// chartingText.setFormat(Paths.font('vcr.ttf'), 32);
+		// chartingText.x = cam.width - (chartingText.width + 20);
+		// chartingText.y = cam.height - (chartingText.height + 20);
+		// chartingText.updateHitbox();
+		// chartingText.visible = PlayState.chartingMode;
+		// add(chartingText);
+
+		// blueballedTxt.alpha = 0;
+		// levelDifficulty.alpha = 0;
+		// levelInfo.alpha = 0;
+
+		// levelInfo.x = cam.width - (levelInfo.width + 20);
+		// levelDifficulty.x = cam.width - (levelDifficulty.width + 20);
+		// blueballedTxt.x = cam.width - (blueballedTxt.width + 20);
 
 		FlxTween.tween(bg, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
-		FlxTween.tween(levelInfo, {alpha: 1, y: 20}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3});
-		//FlxTween.tween(levelDifficulty, {alpha: 1, y: levelDifficulty.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.5});
-		FlxTween.tween(blueballedTxt, {alpha: 1, y: blueballedTxt.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.7});
+		// FlxTween.tween(levelInfo, {alpha: 1, y: 20}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3});
+		// //FlxTween.tween(levelDifficulty, {alpha: 1, y: levelDifficulty.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.5});
+		// FlxTween.tween(blueballedTxt, {alpha: 1, y: blueballedTxt.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.7});
 
 		grpMenuShit = new FlxTypedGroup<Alphabet>();
 		add(grpMenuShit);
@@ -154,8 +163,8 @@ class PauseSubState extends MusicBeatSubstate
 	var holdTime:Float = 0;
 	override function update(elapsed:Float)
 	{
-		if (pauseMusic.volume < 0.5)
-			pauseMusic.volume += 0.01 * elapsed;
+		if (pauseMusic.volume < 1)
+			pauseMusic.volume += 0.025 * elapsed;
 
 		super.update(elapsed);
 		if(skipTimeText != null && skipTimeTracker != null) updateSkipTextStuff();
@@ -234,14 +243,11 @@ class PauseSubState extends MusicBeatSubstate
 				case 'Options':
 					PlayState.instance.paused = true; // For lua
 					PlayState.instance.vocals.volume = 0;
-					#if HIT_SINGLE
-					HitSingleMenu.inPauseOptions = true;
-					HitSingleMenu.currentMode = OPTIONS;
+					OptionsState.onPlayState = true;
 					new FlxTimer().start(0,Void->{
 						FlxG.sound.music.volume = 0;
-						MusicBeatState.switchState(new HitSingleMenu());
+						MusicBeatState.switchState(new OptionsState());
 					});
-					#end
 
 				case "Resume":
 					close();
