@@ -56,6 +56,26 @@ class Highscore
 		}
 	}
 
+	public static function isHighscore(song:String, score:Int = 0, ?diff:Int = 0, ?rating:Float = -1):Bool
+	{
+		var daSong:String = formatSong(song, diff);
+
+		if (songScores.exists(daSong)) {
+			if (songScores.get(daSong) < score) {
+				setScore(daSong, score);
+				if(rating >= 0) return true;
+				return false;
+			} else {
+				return false;
+			}
+		}
+		else {
+			setScore(daSong, score);
+			if(rating >= 0) return true;
+			return false;
+		}
+	}
+
 	public static function saveWeekScore(week:String, score:Int = 0, ?diff:Int = 0):Void
 	{
 		var daWeek:String = formatSong(week, diff);

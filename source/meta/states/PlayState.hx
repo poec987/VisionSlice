@@ -83,6 +83,7 @@ import modchart.*;
 // Imports for the VisionSlice
 
 import meta.data.SongMetadata.Metadata;
+import funkin.HighscoreTallies;
 
 #if sys
 import sys.FileSystem;
@@ -244,6 +245,8 @@ class PlayState extends MusicBeatState
 	public var health:Float = 1;
 	public var displayedHealth:Float = 1;
 	public var combo:Int = 0;
+
+	public var totalNotes:Int = 0;
 
 	private var healthBarBG:AttachedSprite;
 	public var healthBar:FlxBar;
@@ -2365,6 +2368,9 @@ class PlayState extends MusicBeatState
 		notes = new FlxTypedGroup<Note>();
 		add(notes);
 
+		HighscoreTallies.tallies.combo = 0;
+    	HighscoreTallies.tallies = new Tallies();
+
 		var noteData:Array<SwagSection>;
 
 		// NEW SHIT
@@ -4297,14 +4303,29 @@ class PlayState extends MusicBeatState
 		#end
 
 		if(ret != Globals.Function_Stop && !transitioning) {
+
 			if (SONG.validScore)
 			{
 				#if !switch
 				var percent:Float = ratingPercent;
 				if(Math.isNaN(percent)) percent = 0;
 				Highscore.saveScore(SONG.song, songScore, storyDifficulty, percent);
+				HighscoreTallies.tallies.isHighscore = Highscore.isHighscore(SONG.song, songScore, storyDifficulty, percent);
 				#end
 			}
+
+			HighscoreTallies.tallies.missed = songMisses;
+			HighscoreTallies.tallies.shit = shits;
+			HighscoreTallies.tallies.bad = bads;
+			HighscoreTallies.tallies.good = goods;
+			HighscoreTallies.tallies.sick = sicks;
+			HighscoreTallies.tallies.epic = epics;
+			HighscoreTallies.tallies.totalNotes = totalNotes;
+			HighscoreTallies.tallies.totalNotesHit = totalNotesHit;
+			HighscoreTallies.tallies.combo = combo;
+			HighscoreTallies.tallies.maxCombo = combo; // TODO: MAKE THIS ACTUALLY MAX COMBO
+
+			HighscoreTallies.talliesLevel = HighscoreTallies.combineTallies(HighscoreTallies.tallies, HighscoreTallies.talliesLevel);
 
 			if (chartingMode)
 			{
@@ -4847,6 +4868,7 @@ class PlayState extends MusicBeatState
 		vocals.volume = 0;
 		if(!practiceMode) songScore -= 10;
 
+		if (!daNote.isSustainNote) totalNotes++;
 		totalPlayed++;
 		RecalculateRating();
 
@@ -5104,6 +5126,7 @@ class PlayState extends MusicBeatState
 			if (!note.isSustainNote)
 			{
 				combo += 1;
+				totalNotes += 1;
 				if(combo > 9999) combo = 9999;
 				popUpScore(note);
 			}
@@ -5670,5 +5693,48 @@ class PlayState extends MusicBeatState
 			FlxG.sound.music.onComplete=null;
 
 		return super.switchTo(nextState);
+	}
+
+	// ADDITIONAL VISION SLICE SHIT
+
+	function moveToResultsScreen(isNewHighscore:Bool, ?prevScoreData:SaveScoreData):Void
+	{
+		persistentUpdate = false;
+		vocals.stop();
+		camHUD.alpha = 1;
+
+		var talliesToUse:Tallies = isStoryMode ? HighscoreTallies.talliesLevel : HighscoreTallies.tallies;
+
+		var res:ResultState = new ResultState(
+		{
+			storyMode: isStoryMode,
+			songId: currentChart.song.id,
+			difficultyId: currentDifficulty,
+			variationId: currentVariation,
+			characterId: currentChart.characters.player,
+			title: isStoryMode ? ('${'MY BALLS'}') : ('${metadata.card.name} by ${metadata.credits.music}'),
+			prevScoreData: prevScoreData,
+			scoreData:
+			{
+				score: isStoryMode ? campaignScore : songScore,
+				tallies:
+				{
+					sick: talliesToUse.sick,
+					good: talliesToUse.good,
+					bad: talliesToUse.bad,
+					shit: talliesToUse.shit,
+					missed: talliesToUse.missed,
+					combo: talliesToUse.combo,
+					maxCombo: talliesToUse.maxCombo,
+					totalNotesHit: talliesToUse.totalNotesHit,
+					totalNotes: talliesToUse.totalNotes,
+				},
+			},
+			isNewHighscore: isNewHighscore,
+			isPracticeMode: practiceMode,
+			isBotPlayMode: cpuControlled,
+		});
+		this.persistentDraw = false;
+		openSubState(res);
 	}
 }

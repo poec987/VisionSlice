@@ -182,6 +182,10 @@ class Paths
 	{
 		return getPath('data/$key.json', TEXT, library);
 	}
+	inline static public function jsonBase(key:String, ?library:String)
+	{
+		return getPath('$key.json', TEXT, library);
+	}
 	inline static public function noteskin(key:String, ?library:String)
 	{
 		return getPath('noteskins/$key', TEXT, library);
@@ -510,6 +514,10 @@ class Paths
 
 	inline static public function modsJson(key:String) {
 		return modFolders('data/' + key + '.json');
+	}
+
+	inline static public function modsJsonBase(key:String) {
+		return modFolders(key + '.json');
 	}
 
 	inline static public function modsVideo(key:String) {
